@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  FARMER
+  WAREHOUSE
+  BUYER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(BUYER)
+  createdAt    DateTime  @default(now())
+
+  farms        Farm[]
+  orders       Order[]
+  shipments    Shipment[]
+}
+
+model Farm {
+  id            String   @id @default(uuid())
+  ownerId       String
+  owner         User     @relation(fields: [ownerId], references: [id])
+  name          String
+  location      String
+  areaHectares  Float
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+
+  crops         Crop[]
+}
+
+model Crop {
+  id              String   @id @default(uuid())
+  farmId          String
+  farm            Farm     @relation(fields: [farmId], references: [id])
+  name            String
+  variety         String?
+  plantedAt       DateTime?
+  expectedHarvest DateTime?
+  status          String   @default("growing")
+
+  batches         Batch[]
+}
+
+model Warehouse {
+  id          String  @id @default(uuid())
+  name        String
+  location    String
+  capacityKg  Float
+
+  batches     Batch[]
+}
+
+model Batch {
+  id           String    @id @default(uuid())
+  cropId       String
+  crop         Crop      @relation(fields: [cropId], references: [id])
+  warehouseId  String
+  warehouse    Warehouse @relation(fields: [warehouseId], references: [id])
+  quantityKg   Float
+  harvestedAt  DateTime  @default(now())
+  qrCode       String    @unique @default(uuid())
+  status       String    @default("available")
+
+  orderItems   OrderItem[]
+  harvestCost  HarvestCost?
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  buyerId     String
+  buyer       User        @relation(fields: [buyerId], references: [id])
+  orderNumber String      @unique
+  status      OrderStatus @default(PENDING)
+  orderedAt   DateTime    @default(now())
+  totalAmount Float       @default(0)
+
+  items       OrderItem[]
+  shipment    Shipment?
+  invoice     Invoice?
+}
+
+model OrderItem {
+  id         String @id @default(uuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id])
+  batchId    String
+  batch      Batch  @relation(fields: [batchId], references: [id])
+  quantityKg Float
+  unitPrice  Float
+}
+
+model Shipment {
+  id          String   @id @default(uuid())
+  orderId     String   @unique
+  order       Order    @relation(fields: [orderId], references: [id])
+  driverId    String?
+  driver      User?    @relation(fields: [driverId], references: [id])
+  status      String   @default("pending")
+  dispatchedAt DateTime?
+  deliveredAt  DateTime?
+}
+
+model HarvestCost {
+  id         String @id @default(uuid())
+  batchId    String @unique
+  batch      Batch  @relation(fields: [batchId], references: [id])
+  laborCost  Float  @default(0)
+  seedCost   Float  @default(0)
+  otherCost  Float  @default(0)
+  totalCost  Float  @default(0)
+  notes      String?
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  orderId       String        @unique
+  order         Order         @relation(fields: [orderId], references: [id])
+  invoiceNumber String        @unique
+  totalAmount   Float
+  dueDate       DateTime
+  status        InvoiceStatus @default(DRAFT)
+  createdAt     DateTime      @default(now())
+
+  payments      Payment[]
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
+  amountPaid Float
+  paidAt    DateTime @default(now())
+  method    String?
+}
