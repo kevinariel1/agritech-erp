@@ -1,6 +1,10 @@
-import { PrismaClient } from '@prisma/client';
-import { hashSync } from 'bcryptjs';
-const prisma = new PrismaClient();
+import { PrismaClient } from '@prisma/client'
+import { PrismaPostgres } from '@prisma/adapter-pg'
+import pg from 'pg'
+
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+const adapter = new PrismaPostgres(pool)
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
   const hash = (pw) => hashSync(pw, 10);
