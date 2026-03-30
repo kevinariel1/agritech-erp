@@ -4,27 +4,32 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+import authRoutes from './routes/auth.routes';
+import { errorHandler, notFound } from './middleware/error.middleware';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'AgriTech ERP API is running' });
 });
 
-// Routes will be added here
-// app.use('/api/auth', authRoutes);
-// app.use('/api/products', productRoutes);
-// etc...
+// Routes
+app.use('/api/auth', authRoutes);
+
+// 404 & error handling (must be last)
+app.use(notFound);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

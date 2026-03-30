@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  FARMER
+  DISTRIBUTOR
+  RETAILER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum ShipmentStatus {
+  PREPARING
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  firstName     String
+  lastName      String
+  phone         String?
+  role          UserRole
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations based on role
+  farm        Farm?
+  retailer    Retailer?
+  distributor Distributor?
+
+  // Orders as buyer or seller
+  ordersAsBuyer  Order[] @relation("BuyerOrders")
+  ordersAsSeller Order[] @relation("SellerOrders")
+
+  @@map("users")
+}
+
+model Farm {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  address        String
+  city           String
+  province       String
+  postalCode     String?
+  latitude       Float?
+  longitude      Float?
+  certifications String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  products    Product[]
+  inventories Inventory[]
+
+  @@map("farms")
+}
+
+model Distributor {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName    String
+  address        String
+  city           String
+  province       String
+  licenseNumber  String?
+  vehicleCount   Int      @default(0)
+  warehouseCount Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  shipments Shipment[]
+
+  @@map("distributors")
+}
+
+model Retailer {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName String
+  address   String
+  city      String
+  province  String
+  storeType String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inventories Inventory[]
+
+  @@map("retailers")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  farmId      String
+  farm        Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  category    String
+  unit        String // kg, pcs, liter, etc.
+  unitPrice   Float
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inventories Inventory[]
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+model Inventory {
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Location can be farm or retailer
+  farmId     String?
+  farm       Farm?     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  retailerId String?
+  retailer   Retailer? @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+
+  quantity     Float
+  batchNumber  String
+  harvestDate  DateTime?
+  expiryDate   DateTime?
+  qualityGrade String? // A, B, C, Premium, etc.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("inventories")
+}
+
+model Order {
+  id          String @id @default(uuid())
+  orderNumber String @unique
+
+  buyerId  String
+  buyer    User   @relation("BuyerOrders", fields: [buyerId], references: [id])
+  sellerId String
+  seller   User   @relation("SellerOrders", fields: [sellerId], references: [id])
+
+  status      OrderStatus @default(PENDING)
+  totalAmount Float
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems OrderItem[]
+  shipment   Shipment?
+  payment    Payment?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  quantity  Float
+  unitPrice Float
+  subtotal  Float
+
+  createdAt DateTime @default(now())
+
+  @@map("order_items")
+}
+
+model Shipment {
+  id            String       @id @default(uuid())
+  orderId       String       @unique
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  distributorId String?
+  distributor   Distributor? @relation(fields: [distributorId], references: [id])
+
+  trackingNumber String         @unique
+  status         ShipmentStatus @default(PREPARING)
+
+  pickupAddress   String
+  deliveryAddress String
+
+  estimatedPickup   DateTime?
+  actualPickup      DateTime?
+  estimatedDelivery DateTime?
+  actualDelivery    DateTime?
+
+  driverName    String?
+  vehicleNumber String?
+  notes         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trackingHistory TrackingHistory[]
+
+  @@map("shipments")
+}
+
+model TrackingHistory {
+  id         String   @id @default(uuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  status    ShipmentStatus
+  location  String?
+  notes     String?
+  timestamp DateTime       @default(now())
+
+  @@map("tracking_history")
+}
+
+model Payment {
+  id      String @id @default(uuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  amount        Float
+  paymentMethod String // Bank Transfer, Cash, E-wallet
+  status        PaymentStatus @default(PENDING)
+
+  paidAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payments")
+}
