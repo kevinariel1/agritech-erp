@@ -1,13 +1,41 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthLayout } from '@/layouts/AuthLayout';
+import { AppLayout } from '@/layouts/AppLayout';
+import { LoginPage } from '@/pages/auth/LoginPage';
+import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { DashboardPage } from '@/pages/DashboardPage';
+import { FarmerProductsPage } from '@/pages/farmer/FarmerProductsPage';
+import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
-        <Routes>
-          <Route path="/" element={<h1 className="text-3xl font-bold p-8">AgriTech ERP</h1>} />
-        </Routes>
-      </div>
+      <Routes>
+        {/* Auth routes */}
+        <Route path="/auth" element={<AuthLayout />}>
+          <Route index element={<Navigate to="login" replace />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="register" element={<RegisterPage />} />
+        </Route>
+
+        {/* Protected app routes */}
+        <Route path="/" element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }>
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="products" element={
+            <ProtectedRoute allowedRoles={['FARMER', 'ADMIN']}>
+              <FarmerProductsPage />
+            </ProtectedRoute>
+          } />
+          <Route index element={<Navigate to="dashboard" replace />} />
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/auth/login" replace />} />
+      </Routes>
     </BrowserRouter>
   );
 }
