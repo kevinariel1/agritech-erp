@@ -10,6 +10,8 @@ import inventoryRoutes from './routes/inventory.routes';
 import orderRoutes from './routes/order.routes';
 import shipmentRoutes from './routes/shipment.routes';
 import paymentRoutes from './routes/payment.routes';
+import statsRoutes from './routes/stats.routes';
+import adminRoutes from './routes/admin.routes';
 import { errorHandler, notFound } from './middleware/error.middleware';
 
 const app = express();
@@ -35,6 +37,8 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/shipments', shipmentRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/dashboard', statsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 & error handling (must be last)
 app.use(notFound);

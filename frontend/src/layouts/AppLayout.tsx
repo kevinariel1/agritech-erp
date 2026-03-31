@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Warehouse, ShoppingCart,
-  Truck, CreditCard, LogOut, Menu, X, ChevronRight, Leaf
+  Truck, CreditCard, LogOut, Menu, X, ChevronRight, Leaf, Users
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import type { UserRole } from '@/types/auth';
@@ -16,6 +16,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard',  path: '/dashboard',           icon: <LayoutDashboard size={18} />, roles: ['FARMER','RETAILER','DISTRIBUTOR','ADMIN'] },
+  { label: 'Users',      path: '/admin/users',         icon: <Users size={18} />,           roles: ['ADMIN'] },
   { label: 'Products',   path: '/products',            icon: <Package size={18} />,          roles: ['FARMER','RETAILER','ADMIN'] },
   { label: 'Inventory',  path: '/inventory',           icon: <Warehouse size={18} />,        roles: ['FARMER','RETAILER','ADMIN'] },
   { label: 'Orders',     path: '/orders',              icon: <ShoppingCart size={18} />,     roles: ['FARMER','RETAILER','ADMIN'] },
