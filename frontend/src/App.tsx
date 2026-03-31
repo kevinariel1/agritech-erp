@@ -6,6 +6,7 @@ import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { FarmerProductsPage } from '@/pages/farmer/FarmerProductsPage';
 import { InventoryPage } from '@/pages/farmer/InventoryPage';
+import { OrdersPage } from '@/pages/OrdersPage';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 
 function App() {
@@ -34,6 +35,11 @@ function App() {
           <Route path="inventory" element={
             <ProtectedRoute allowedRoles={['FARMER', 'RETAILER', 'ADMIN']}>
               <InventoryPage />
+            </ProtectedRoute>
+          } />
+          <Route path="orders" element={
+            <ProtectedRoute allowedRoles={['FARMER', 'RETAILER', 'ADMIN']}>
+              <OrdersPage />
             </ProtectedRoute>
           } />
           <Route index element={<Navigate to="dashboard" replace />} />
