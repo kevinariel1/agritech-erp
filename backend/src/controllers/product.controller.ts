@@ -72,7 +72,7 @@ export const getProduct = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const product = await prisma.product.findUnique({
       where: { id },
@@ -162,7 +162,7 @@ export const updateProduct = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.userId;
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const farm = await prisma.farm.findUnique({ where: { userId } });
     if (!farm) {
@@ -221,7 +221,7 @@ export const deleteProduct = async (
   try {
     const userId = req.user?.userId;
     const userRole = req.user?.role;
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const existing = await prisma.product.findUnique({ where: { id } });
     if (!existing) {
