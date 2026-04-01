@@ -177,7 +177,7 @@ export const login = async (
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    if (!isPasswordValid) { 
       sendError(res, 'Invalid email or password', 401);
       return;
     }

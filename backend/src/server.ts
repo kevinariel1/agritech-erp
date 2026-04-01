@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
