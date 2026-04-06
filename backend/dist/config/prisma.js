@@ -1,0 +1,24 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.prisma = void 0;
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config({ override: true });
+const prisma_1 = require("../../generated/prisma");
+const adapter_pg_1 = require("@prisma/adapter-pg");
+const pg_1 = require("pg");
+const pool = new pg_1.Pool({
+    connectionString: process.env.DATABASE_URL,
+});
+const adapter = new adapter_pg_1.PrismaPg(pool);
+const globalForPrisma = globalThis;
+exports.prisma = globalForPrisma.prisma ??
+    new prisma_1.PrismaClient({
+        adapter,
+        log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    });
+if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = exports.prisma;
+}
